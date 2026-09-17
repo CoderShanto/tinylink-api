@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreUrlRequest;
 use App\Models\Url;
 use Illuminate\Support\Str;
-use Illuminate\Http\Request;
 
 class UrlController extends Controller
 {
