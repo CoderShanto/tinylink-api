@@ -5,23 +5,17 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreUrlRequest;
 use App\Models\Url;
-use App\Models\User;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Str;
 
 class UrlController extends Controller
 {
-    // 1. List all URLs for the authenticated user with Pagination
+    // 1. List all URLs for the authenticated user with Pagination (Phase 5)
     public function index(Request $request)
     {
         $perPage = $request->input('per_page', 10);
-        
-        /** @var User $user */
-        $user = Auth::user();
 
-        $urls = $user->urls()
+        $urls = $request->user()->urls()
             ->orderBy('created_at', 'desc')
             ->paginate($perPage);
 
@@ -32,15 +26,12 @@ class UrlController extends Controller
         ]);
     }
 
-    // 2. Create Short URL
+    // 2. Create Short URL (Phase 4)
     public function store(StoreUrlRequest $request)
     {
         $shortCode = $request->custom_code ?? $this->generateUniqueShortCode();
-        
-        /** @var User $user */
-        $user = Auth::user();
 
-        $url = $user->urls()->create([
+        $url = $request->user()->urls()->create([
             'original_url' => $request->url,
             'short_code'   => $shortCode,
             'click_count'  => 0,
@@ -53,16 +44,11 @@ class UrlController extends Controller
         ], 201);
     }
 
-    // 3. Get URL Details with Policy Authorization
+    // 3. Get URL Details with Policy Authorization (Phase 6 & 7)
     public function show(Url $url)
     {
-        // Using Gate::allows to check the UrlPolicy
-        if (!Gate::allows('view', $url)) {
-            return response()->json([
-                'success' => false,
-                'message' => 'You are not authorized to view this URL'
-            ], 403);
-        }
+        // Policy check: User কি এই URL টির মালিক?
+        $this->authorize('view', $url);
 
         return response()->json([
             'success' => true,
@@ -71,16 +57,11 @@ class UrlController extends Controller
         ]);
     }
 
-    // 4. Delete URL with Policy Authorization
+    // 4. Delete URL with Policy Authorization (Phase 8)
     public function destroy(Url $url)
     {
-        // Using Gate::allows to check the UrlPolicy
-        if (!Gate::allows('delete', $url)) {
-            return response()->json([
-                'success' => false,
-                'message' => 'You are not authorized to delete this URL'
-            ], 403);
-        }
+        // Policy check: User কি এই URL টি ডিলিট করার অধিকার রাখে?
+        $this->authorize('delete', $url);
 
         $url->delete();
 

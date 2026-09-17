@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreUrlRequest;
 use App\Models\Url;
-use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
@@ -13,12 +12,10 @@ use Illuminate\Support\Str;
 
 class UrlController extends Controller
 {
-    // 1. List all URLs for the authenticated user with Pagination
+    // List all URLs for the authenticated user with Pagination
     public function index(Request $request)
     {
         $perPage = $request->input('per_page', 10);
-        
-        /** @var User $user */
         $user = Auth::user();
 
         $urls = $user->urls()
@@ -32,12 +29,10 @@ class UrlController extends Controller
         ]);
     }
 
-    // 2. Create Short URL
+    // Create Short URL
     public function store(StoreUrlRequest $request)
     {
         $shortCode = $request->custom_code ?? $this->generateUniqueShortCode();
-        
-        /** @var User $user */
         $user = Auth::user();
 
         $url = $user->urls()->create([
@@ -53,10 +48,9 @@ class UrlController extends Controller
         ], 201);
     }
 
-    // 3. Get URL Details with Policy Authorization
+    // Get URL Details with Policy Authorization
     public function show(Url $url)
     {
-        // Using Gate::allows to check the UrlPolicy
         if (!Gate::allows('view', $url)) {
             return response()->json([
                 'success' => false,
@@ -71,10 +65,9 @@ class UrlController extends Controller
         ]);
     }
 
-    // 4. Delete URL with Policy Authorization
+    // Delete URL with Policy Authorization
     public function destroy(Url $url)
     {
-        // Using Gate::allows to check the UrlPolicy
         if (!Gate::allows('delete', $url)) {
             return response()->json([
                 'success' => false,
